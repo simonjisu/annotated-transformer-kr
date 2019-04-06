@@ -33,7 +33,15 @@ def get_padding_mask(q, k=None, pad_idx=1, mode='attn'):
                                  diagonal=1)
         subseq_mask = subseq_mask.unsqueeze(0).expand(B, -1, -1)
         return subseq_mask
-    
+
+def get_pos(x, pad_idx=1, pos_pad_idx=0):
+    """return postion of tensor function"""
+    B, T = x.size()
+    pos = torch.arange(1, T+1, device=x.device).expand(B, -1)
+    padding_mask = (x == pad_idx)
+    pos = pos.masked_fill(padding_mask, pos_pad_idx)
+    return pos
+
     
 # Inference functions
 
@@ -86,3 +94,4 @@ def draw_attentions(n_head, attn):
         axes[i, j].set_title(f"head: {k}", loc="center", y=1.5)
     plt.tight_layout()
     plt.show()
+    

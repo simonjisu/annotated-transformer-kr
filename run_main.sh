@@ -1,0 +1,22 @@
+nohup python3 -u main.py \
+    -rt "./data" \
+    -dt "multi30k" \
+    -maxlen 50 \
+    -minfreq 1 \
+    -nl 6 \
+    -nh 8 \
+    -dm 512 \
+    -dk 64 \
+    -dv 64 \
+    -pad 1 \
+    -pospad 0 \
+    -drop 0.1 \
+    -lws \
+    -eps 0.1 \
+    -warm 40000 \
+    -b1 0.9 \
+    -b2 0.98 \
+    -bt 64 \
+    -step 50 \
+    -cuda \
+    -svp "./saved_model/model.pt" > train.log &

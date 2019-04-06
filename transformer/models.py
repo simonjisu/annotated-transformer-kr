@@ -3,8 +3,8 @@
 
 import torch
 import torch.nn as nn
-from layers import Encode_Layer, Decode_Layer, Embedding, PositionalEncoding
-from utils import get_padding_mask
+from .layers import Encode_Layer, Decode_Layer, Embedding, PositionalEncoding
+from .utils import get_padding_mask
 
 # Encoder 
 class Encoder(nn.Module):
@@ -105,11 +105,12 @@ class Decoder(nn.Module):
         # forward decode layer
         for dec_layer in self.layers:
             if self.return_attn:
-                dec_output, dec_self_attn, dec_enc_attn = dec_layer(dec_input=dec_output, 
-                                                                    enc_output=enc_output, 
-                                                                    dec_self_mask=self_attn_mask, 
-                                                                    dec_enc_mask=dec_enc_attn_mask,
-                                                                    non_pad_mask=non_pad_mask)
+                dec_output, dec_self_attn, dec_enc_attn = \
+                    dec_layer(dec_input=dec_output, 
+                              enc_output=enc_output, 
+                              dec_self_mask=self_attn_mask, 
+                              dec_enc_mask=dec_enc_attn_mask,
+                              non_pad_mask=non_pad_mask)
                 self_attns.append(dec_self_attn)
                 dec_enc_attns.append(dec_enc_attn)
             else:
@@ -138,12 +139,14 @@ class Transformer(nn.Module):
         self.encoder = Encoder(enc_vocab_len, enc_max_seq_len, n_layer, n_head, 
                                d_model, d_k, d_v, d_f, 
                                pad_idx=pad_idx, 
+                               pos_pad_idx=pos_pad_idx,
                                drop_rate=drop_rate, 
                                use_conv=use_conv, 
                                return_attn=return_attn)
         self.decoder = Decoder(dec_vocab_len, dec_max_seq_len, n_layer, n_head, 
                                d_model, d_k, d_v, d_f,
                                pad_idx=pad_idx, 
+                               pos_pad_idx=pos_pad_idx,
                                drop_rate=drop_rate, 
                                use_conv=use_conv, 
                                return_attn=return_attn)
@@ -168,7 +171,7 @@ class Transformer(nn.Module):
         * dec_pos: (B, T_d)
         -------------------------------------
         Outputs:
-        * dec_output: (B*T_q, d_model)
+        * dec_output: (B, T_d, d_model)
         * attns_dict:
             * enc_self_attns: n_layers * (n_head, B, T_e, T_e)
             * dec_self_attns: n_layers * (n_head, B, T_d, T_d)
@@ -181,10 +184,10 @@ class Transformer(nn.Module):
             attns_dict = {'enc_self_attns': enc_self_attns, 
                          'dec_self_attns': dec_self_attns,
                          'dec_enc_attns': dec_enc_attns}
-            return dec_output.view(-1, dec_output.size(2)), attns_dict
+            return dec_output, attns_dict
         else:
             enc_output = self.encoder(enc, enc_pos)
             dec_output = self.decoder(dec, dec_pos, enc, enc_output)
             dec_output = self.projection(dec_output)
-            return dec_output.view(-1, dec_output.size(2))
+            return dec_output
         

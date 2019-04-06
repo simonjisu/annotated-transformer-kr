@@ -3,8 +3,9 @@
 
 import torch
 import torch.nn as nn
-from utils import get_padding_mask
-from sublayers import MultiHeadAttention, PositionWiseFFN
+import numpy as np
+from .utils import get_padding_mask
+from .sublayers import MultiHeadAttention, PositionWiseFFN
 
 # Encode Layer
 class Encode_Layer(nn.Module):
@@ -136,7 +137,7 @@ class Decode_Layer(nn.Module):
         return dec_output
     
     
-# Encoding Layers
+# Position Encoding & Embedding Layers
 class PositionalEncoding(nn.Module):
     """Positional Encoding"""
     def __init__(self, n_pos, d_model, pos_pad_idx=0):

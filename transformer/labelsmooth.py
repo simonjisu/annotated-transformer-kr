@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .utils import get_padding_mask
 
 class LabelSmoothing(nn.Module):
     """Label Smoothing"""
@@ -23,36 +22,37 @@ class LabelSmoothing(nn.Module):
         Equal to H(q', p) = H(q, p) + eps/(1-eps) * (D_KL(u || p) + H(u))
         """
         super(LabelSmoothing, self).__init__()
-        self.criterion = nn.CrossEntropyLoss(ignore_index=pad_idx, reduction='sum')
+        self.criterion = nn.CrossEntropyLoss(reduction='sum')
         self.pad_idx = pad_idx
         self.eps = eps
         self.trg_vocab_size = trg_vocab_size
         
-    def forward(self, x, target):
+    def forward(self, x, t):
         """
         Inputs:
         x: (B, T_d, V_target), predict scores
         t: (B, T_d)
         """
         assert x.size(2) == self.trg_vocab_size, \
-            'vocab size is not equal x: {}, vocab: {}'.format(x.size(1), self.trg_vocab_size)
-        assert target.dim() == 2, 't must be size of (B, T_q)'
+            'vocab size is not equal x: {}, vocab: {}'.format(x.size(2), self.trg_vocab_size)
+        assert t.dim() == 2, 't must be size of (B, T_q)'
+        
+        target = t.view(-1)
+        pred = x.view(-1, x.size(-1))
         
         # option to not use label smoothing
         if self.eps == 0.0:
-            x = x.view(-1, x.size(-1))
-            return self.criterion(x, target.view(-1))
+            return self.criterion(pred, target)
         
-        non_pad_mask = get_padding_mask(q=target, pad_idx=1, mode='nonpad')
+        # onehot encoding
+        delta_ky = torch.zeros_like(pred).scatter(dim=1, index=target.unsqueeze(1), source=1)
+        # smoothing
+        smoothed_dist = (1 - self.eps) * delta_ky + (1 - delta_ky) * self.eps / (self.trg_vocab_size - 1)
+        # probability and cal loss
+        log_prob = F.log_softmax(pred, dim=1)
+        non_pad_mask = target.ne(self.pad_idx)
+        loss = -(smoothed_dist * log_prob).sum(dim=1)
+        loss = loss.masked_select(non_pad_mask).sum()
 
-        # label smoothing
-        delta_ky = torch.zeros_like(x)
-        delta_ky = delta_ky.scatter(dim=2, index=target.unsqueeze(-1), source=1)
-        # -2: exclude <s>, </s> token
-        # smoothed_dist: B, T_d, vocab_size
-        smoothed_dist = (1 - self.eps) * delta_ky + self.eps / (self.trg_vocab_size - 2)
-        smoothed_dist *= non_pad_mask
-        log_prob = F.log_softmax(x, dim=2)
-        loss = (-(smoothed_dist * log_prob)).sum()
         self.smoothed_dist = smoothed_dist
         return loss

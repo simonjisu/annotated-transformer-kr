@@ -8,7 +8,7 @@ from transformer.warmupoptim import WarmUpOptim
 from trainer import Trainer
 
 
-def argument_parsing():
+def argument_parsing(preparse=False):
     parser = argparse.ArgumentParser(description="Transformer Argparser",
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
@@ -16,7 +16,7 @@ def argument_parsing():
     parser.add_argument("-rt", "--root_dir", required=True,
                    help="Root Dir")
     parser.add_argument("-dt", "--data_type", type=str, default="multi30k",
-                   help="Dataset type")
+                   help="Dataset type: wmt14, multi30k, iwslt")
     parser.add_argument("-maxlen", "--max_length", type=int, default=None,
                    help="Max length of Sentences")
     parser.add_argument("-minfreq", "--min_freq", type=int, default=1,
@@ -71,11 +71,25 @@ def argument_parsing():
                    help="Use Cuda")
     parser.add_argument("-svp","--save_path", type=str, default="./saved_model/model.pt",
                    help="Path to save model")
-
+    parser.add_argument("-load","--load_path", type=str,
+                   help="load previous model to transfer learning")
+    parser.add_argument("-vb","--verbose", type=int, default=0,
+                   help="verbose")
+    
+    if preparse:
+        return parser
+    
     args = parser.parse_args()
     return args
 
 def main(args):
+    # configs path to save model
+    from pathlib import Path
+    p = Path(args.save_path).parent
+    if not p.exists():
+        p.mkdir()
+    
+    
     device = "cuda" if (torch.cuda.is_available() and args.use_cuda) else "cpu"
     import sys
     print(sys.version)
@@ -84,6 +98,7 @@ def main(args):
     (src, trg), (train, valid, _), (train_loader, valid_loader, _) = get_data(args)
     src_vocab_len = len(src.vocab.stoi)
     trg_vocab_len = len(trg.vocab.stoi)
+    print(f"SRC vocab {src_vocab_len}, TRG vocab {trg_vocab_len}")
     enc_max_seq_len = args.max_length
     dec_max_seq_len = args.max_length
     pad_idx = src.vocab.stoi["<pad>"] if args.pad_idx is None else args.pad_idx
@@ -104,9 +119,12 @@ def main(args):
                         pos_pad_idx=pos_pad_idx, 
                         drop_rate=args.drop_rate, 
                         use_conv=args.use_conv, 
-                        return_attn=args.return_attn, 
                         linear_weight_share=args.linear_weight_share, 
                         embed_weight_share=args.embed_weight_share).to(device)
+    
+    if args.load_path is not None:
+        print(f"Load Model {args.load_path}")
+        model.load_state_dict(torch.load(args.load_path))
     
     loss_function = LabelSmoothing(trg_vocab_size=trg_vocab_len, 
                                    pad_idx=args.pad_idx, 
@@ -114,7 +132,7 @@ def main(args):
     
     optimizer = WarmUpOptim(warmup_steps=args.warmup_steps, 
                             d_model=args.d_model, 
-                            optimizer=optim.Adam(model.parameters(), 
+                            optimizer=optim.Adam(model.parameters(),
                                              betas=(args.beta1, args.beta2), 
                                              eps=10e-9))
     
@@ -123,7 +141,8 @@ def main(args):
                       test_loader=valid_loader, 
                       n_step=args.n_step, 
                       device=device, 
-                      save_path=args.save_path)
+                      save_path=args.save_path,
+                      verbose=args.verbose)
     print("Start Training...")
     trainer.main(model=model, loss_function=loss_function)
     

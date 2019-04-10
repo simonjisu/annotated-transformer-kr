@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import matplotlib.pyplot as plt
+from .bleu import compute_bleu
 
 # Used in the model
 
@@ -42,7 +44,18 @@ def get_pos(x, pad_idx=1, pos_pad_idx=0):
     pos = pos.masked_fill(padding_mask, pos_pad_idx)
     return pos
 
-    
+# Metrics for PyTorch
+
+def cal_bleu(target, predict):
+    """calculate bleu score for pytorch"""
+    bleu_score = 0
+    ref_lists = [[t] for t in target.tolist()]
+    pred_list = predict.tolist()
+    for ref, pred in zip(ref_lists, pred_list):
+        bleu_score += compute_bleu([ref], [pred])[0]
+    return bleu_score
+
+
 # Inference functions
 
 def check_dotproduct_dist(d_k, sampling_size=1, seq_len=1, threshold=1e-10):

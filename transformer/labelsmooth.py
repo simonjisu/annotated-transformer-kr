@@ -22,7 +22,10 @@ class LabelSmoothing(nn.Module):
         Equal to H(q', p) = H(q, p) + eps/(1-eps) * (D_KL(u || p) + H(u))
         """
         super(LabelSmoothing, self).__init__()
-        self.criterion = nn.CrossEntropyLoss(reduction='sum')
+        if eps == 0.0:
+            self.criterion = nn.CrossEntropyLoss(ignore_index=pad_idx, reduction='sum')
+        else:
+            self.criterion = nn.KLDivLoss(reduction='sum')
         self.pad_idx = pad_idx
         self.eps = eps
         self.trg_vocab_size = trg_vocab_size
@@ -43,16 +46,16 @@ class LabelSmoothing(nn.Module):
         # option to not use label smoothing
         if self.eps == 0.0:
             return self.criterion(pred, target)
-        
         # onehot encoding
         delta_ky = torch.zeros_like(pred).scatter(dim=1, index=target.unsqueeze(1), source=1)
         # smoothing
         smoothed_dist = (1 - self.eps) * delta_ky + (1 - delta_ky) * self.eps / (self.trg_vocab_size - 1)
+        smoothed_dist[:, self.pad_idx] = 0.0
+        pad_mask = torch.nonzero(target == self.pad_idx).squeeze()
+        smoothed_dist = smoothed_dist.index_fill(0, pad_mask, 0.0)
         # probability and cal loss
         log_prob = F.log_softmax(pred, dim=1)
-        non_pad_mask = target.ne(self.pad_idx)
-        loss = -(smoothed_dist * log_prob).sum(dim=1)
-        loss = loss.masked_select(non_pad_mask).sum()
-
+        loss = self.criterion(log_prob, smoothed_dist)
+        
         self.smoothed_dist = smoothed_dist
         return loss

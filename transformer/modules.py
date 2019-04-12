@@ -11,6 +11,7 @@ class ScaledDotProductAttention(nn.Module):
     def __init__(self, d_k):
         super(ScaledDotProductAttention, self).__init__()
         self.d_k = d_k
+#         self.drop_out = nn.Dropout(drop_rate)
         
     def forward(self, q, k, v, mask=None):
         """
@@ -37,6 +38,9 @@ class ScaledDotProductAttention(nn.Module):
             attn = attn.masked_fill(mask, -np.inf)
         
         attn = torch.softmax(attn, dim=2)  # (B, T_q, T_k) --> (B, T_q, T_k)
+        # fill all nan to zero
+        mask_nan = attn != attn
+        attn = attn.masked_fill(mask_nan, 0)
         output = torch.bmm(attn, v)  # (B, T_q, T_k) * (B, T_v, d_v) --> (B, T_q, d_v), make sure that T_k == T_v
-
+        
         return output, attn

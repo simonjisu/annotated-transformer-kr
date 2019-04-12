@@ -11,30 +11,29 @@ def get_padding_mask(q, k=None, pad_idx=1, mode='attn'):
     > `pad_idx` is vocab pad_idx 
     > mask out for pad in attention with queries & keys sequences
     > return shape: (B, T_q, T_k)
-    mode: nonpad
-    > `pad_idx` is vocab pad_idx 
-    > mask out pad rows in attention
-    > return shape: (B, T_q, T_k)
     mode: subseq
     > mask out next tokens to preserve 'auto-regressive property'
     > return shape: (B, T_q, T_q)
     """
     B, q_len = q.size()
+    B, k_len = k.size() if k is not None else (B, None)
     if mode == 'attn':
         assert k is not None, "must have key sequences"
         padding_mask = k.eq(pad_idx)
         padding_mask = padding_mask.unsqueeze(1).expand(B, q_len, -1)
+        row_pad = q.eq(1).unsqueeze(-1).expand(B, q_len, k_len)
+        padding_mask = (padding_mask + row_pad).ge(1)
         return padding_mask
-    elif mode == 'nonpad':
-        # to mask out pad rows
-        assert k is None, "don't need key sequences"
-        return q.ne(pad_idx).type(torch.float).unsqueeze(-1)
     elif mode =='subseq':
         assert k is None, "don't need key sequences"
         subseq_mask = torch.triu(torch.ones((q_len, q_len), device=q.device, dtype=torch.uint8), 
                                  diagonal=1)
         subseq_mask = subseq_mask.unsqueeze(0).expand(B, -1, -1)
         return subseq_mask
+    else:
+        assert False, "error maksing"
+    
+    
 
 def get_pos(x, pad_idx=1, pos_pad_idx=0):
     """return postion of tensor function"""

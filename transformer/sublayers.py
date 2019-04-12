@@ -25,9 +25,9 @@ class MultiHeadAttention(nn.Module):
         self.linear_q = nn.Linear(d_model, n_head*d_k)
         self.linear_k = nn.Linear(d_model, n_head*d_k)
         self.linear_v = nn.Linear(d_model, n_head*d_v)
-        nn.init.normal_(self.linear_q.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_k)))
-        nn.init.normal_(self.linear_k.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_k)))
-        nn.init.normal_(self.linear_v.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_v)))
+#         nn.init.normal_(self.linear_q.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_k)))
+#         nn.init.normal_(self.linear_k.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_k)))
+#         nn.init.normal_(self.linear_v.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_v)))
         
         self.linear_o = nn.Linear(n_head*d_v, d_model)
         self.attention = ScaledDotProductAttention(d_k)
@@ -60,6 +60,13 @@ class MultiHeadAttention(nn.Module):
         lin_qs = torch.cat(self.linear_q(q).chunk(n_head, dim=2), dim=0)
         lin_ks = torch.cat(self.linear_k(k).chunk(n_head, dim=2), dim=0)
         lin_vs = torch.cat(self.linear_v(v).chunk(n_head, dim=2), dim=0)
+        # same as
+        #  lin_qs = self.linear_q(q).view(B, T_q, n_head, d_k)
+        #  lin_ks = self.linear_k(k).view(B, T_k, n_head, d_k)
+        #  lin_vs = self.linear_v(v).view(B, T_v, n_head, d_v)
+        #  lin_qs = lin_qs.permute(2, 0, 1, 3).contiguous().view(-1, T_q, d_k)
+        #  lin_ks = lin_ks.permute(2, 0, 1, 3).contiguous().view(-1, T_k, d_k)
+        #  lin_vs = lin_vs.permute(2, 0, 1, 3).contiguous().view(-1, T_v, d_v)
         
         if mask is not None:
             mask = mask.repeat(n_head, 1, 1)
@@ -72,9 +79,12 @@ class MultiHeadAttention(nn.Module):
         # be aware `heads.view(batch, T_q, n_head*d_k)` is not same as `torch.cat(heads.chunk(n_head, dim=0), dim=-1)`
         # (n_head * B, T_q, d_v) --> (B, T_q, n_head * d_v)
         heads_cat = torch.cat(heads.chunk(n_head, dim=0), dim=-1)
+        # same as 
+        #  heads = heads.view(n_head, B, T_q, d_v)
+        #  heads_cat = heads.permute(1, 2, 0, 3).contiguous().view(B, T_q, -1)
+
         output = self.linear_o(heads_cat)  # (B, T_q, n_head * d_v) --> (B, T_q, d_model)
         output = self.drop_out(output)
-        
         output = self.layer_norm(residual + output)
 
         return output, attn

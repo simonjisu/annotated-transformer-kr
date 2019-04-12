@@ -34,8 +34,6 @@ class Encoder(nn.Module):
         self_attns = []  # n_layer * (n_head, B, T_e, T_e)
         # self attention padding mask: (B, T_e, T_e)
         attn_mask = get_padding_mask(q=enc, k=enc, pad_idx=self.pad_idx, mode='attn')
-        # non_padding mask: (B, T_e, 1)
-        non_pad_mask = get_padding_mask(q=enc, pad_idx=self.pad_idx, mode='nonpad')
         
         # embedding + position encoding: (B, T_e) --> (B, T_e, d_model)
         enc_output = self.embed_layer(enc) + self.pos_layer(enc_pos)
@@ -44,8 +42,7 @@ class Encoder(nn.Module):
         # forward encode layer
         for enc_layer in self.layers:
             enc_output, enc_self_attn = enc_layer(enc_input=enc_output, 
-                                                  enc_mask=attn_mask, 
-                                                  non_pad_mask=non_pad_mask)
+                                                  enc_mask=attn_mask)
             self_attns.append(torch.stack(torch.chunk(enc_self_attn, self.n_head)))
         
         if return_attn:
@@ -85,8 +82,6 @@ class Decoder(nn.Module):
         dec_enc_attns = []  # n_layer * (n_head, B, T_d, T_e)
         
         
-        # non_padding mask: (B, T_d, 1)
-        non_pad_mask = get_padding_mask(q=dec, pad_idx=self.pad_idx, mode='nonpad')
         # self attention padding mask: (B, T_d, T_d)
         attn_mask = get_padding_mask(q=dec, k=dec, pad_idx=self.pad_idx, mode='attn')
         subseq_mask = get_padding_mask(q=dec, mode='subseq')
@@ -103,8 +98,7 @@ class Decoder(nn.Module):
                     dec_layer(dec_input=dec_output, 
                               enc_output=enc_output, 
                               dec_self_mask=self_attn_mask, 
-                              dec_enc_mask=dec_enc_attn_mask,
-                              non_pad_mask=non_pad_mask)
+                              dec_enc_mask=dec_enc_attn_mask)
             
             self_attns.append(torch.stack(torch.chunk(dec_self_attn, self.n_head)))
             dec_enc_attns.append(torch.stack(torch.chunk(dec_enc_attn, self.n_head)))
@@ -142,8 +136,7 @@ class Transformer(nn.Module):
             # share the same weight matrix between the decoder embedding layer 
             # and the pre-softmax linear transformation
             self.projection.weight = self.decoder.embed_layer.embedding.weight
-#             self.x_logit_scale = (d_model ** -0.5)
-            self.x_logit_scale = 1.
+            self.x_logit_scale = (d_model ** -0.5)
         else:
             self.x_logit_scale = 1.
         
@@ -181,4 +174,3 @@ class Transformer(nn.Module):
             dec_output = self.decoder(dec, dec_pos, enc, enc_output, return_attn)
             dec_output = self.projection(dec_output) * self.x_logit_scale
             return dec_output
-        

@@ -16,7 +16,9 @@ class Encode_Layer(nn.Module):
         self.selfattn = MultiHeadAttention(n_head, d_model, d_k, d_v, drop_rate=drop_rate)
         self.pwffn = PositionWiseFFN(d_model, d_f, drop_rate=drop_rate, use_conv=use_conv)
         
-    def forward(self, enc_input, enc_mask=None, non_pad_mask=None):
+#     def forward(self, enc_input, enc_mask=None, non_pad_mask=None):
+    def forward(self, enc_input, enc_mask=None):
+
         """
         Inputs:
         * enc_input: (B, T_e, d_model)
@@ -30,11 +32,9 @@ class Encode_Layer(nn.Module):
         # Layer: Multi-Head Attention + Add & Norm
         # encode self-attention
         enc_output, enc_attn = self.selfattn(enc_input, enc_input, enc_input, mask=enc_mask)
-        enc_output *= non_pad_mask
         
         # Layer: PositionWiseFFN + Add & Norm
         pw_output = self.pwffn(enc_output)
-        enc_output *= non_pad_mask
 
         return enc_output, enc_attn
     
@@ -51,15 +51,13 @@ class Decode_Layer(nn.Module):
         self.dec_enc_attn = MultiHeadAttention(n_head, d_model, d_k, d_v, drop_rate=drop_rate)
         self.pwffn = PositionWiseFFN(d_model, d_f, drop_rate=drop_rate, use_conv=use_conv)
     
-    def forward(self, dec_input, enc_output, dec_self_mask=None, 
-                dec_enc_mask=None, non_pad_mask=None):
+    def forward(self, dec_input, enc_output, dec_self_mask=None, dec_enc_mask=None):
         """
         Inputs:
         * dec_input: (B, T_d, d_model)
         * enc_input: (B, T_e, d_model)
         * dec_self_mask: (B, T_d, T_d)
         * dec_enc_mask: (B, T_d, T_e)
-        * non_pad_mask: (B, T_d, 1)
         -------------------------------------
         Outputs:
         * dec_output: (B, T_d, d_model)
@@ -70,19 +68,18 @@ class Decode_Layer(nn.Module):
         # decode self-attention
         dec_self_output, dec_self_attn = \
             self.selfattn_masked(dec_input, dec_input, dec_input, mask=dec_self_mask)
-        dec_self_output *= non_pad_mask
         
         # Layer: Multi-Head Attention + Add & Norm
         # decode output(queries) + encode output(keys, values)
         dec_output, dec_enc_attn = \
             self.dec_enc_attn(dec_self_output, enc_output, enc_output, mask=dec_enc_mask)
-        dec_output *= non_pad_mask
         
         # Layer: PositionWiseFFN + Add & Norm
         dec_output = self.pwffn(dec_output)
-        dec_output *= non_pad_mask
 
-        return dec_output, (dec_self_attn, dec_enc_attn)    
+        return dec_output, (dec_self_attn, dec_enc_attn)     
+    
+    
     
 # Position Encoding & Embedding Layers
 class PositionalEncoding(nn.Module):

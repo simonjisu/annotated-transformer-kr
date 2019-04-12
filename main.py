@@ -47,8 +47,6 @@ def argument_parsing(preparse=False):
                    help="Share the same weight matrix between the decoder embedding layer and the encoder embedding layer")
     parser.add_argument("-conv","--use_conv", action="store_true",
                    help="Use Convolution operation in PositionWiseFFN layer")
-    parser.add_argument("-rtattn","--return_attn", action="store_true",
-                   help="Return Attention Matrix")
 
     # loss function
     parser.add_argument("-eps", "--smooth_eps", type=float, default=0.1,
@@ -75,6 +73,9 @@ def argument_parsing(preparse=False):
                    help="load previous model to transfer learning")
     parser.add_argument("-vb","--verbose", type=int, default=0,
                    help="verbose")
+    parser.add_argument("-met","--metrics_method", type=str, default="acc",
+                   help="verbose")
+    
     
     if preparse:
         return parser
@@ -142,6 +143,7 @@ def main(args):
                       n_step=args.n_step, 
                       device=device, 
                       save_path=args.save_path,
+                      metrics_method=args.metrics_method,
                       verbose=args.verbose)
     print("Start Training...")
     trainer.main(model=model, loss_function=loss_function)

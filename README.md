@@ -35,7 +35,7 @@ Target Sentence:
 Predicted Sentence:
    ein junger hund schaut im schnee . 
 Google Translated Sentence:
-   a young dog is looking in the snow.
+   ein junger lassie aussehender hund ist im schnee.
 ```
 
 ![dec_enc_attns-6](figs/dec_enc_attns-6.png)

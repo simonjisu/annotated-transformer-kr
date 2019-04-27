@@ -42,10 +42,8 @@ class Encode_Layer(nn.Module):
 # Decode Layer
 class Decode_Layer(nn.Module):
     """decode layer"""
-    def __init__(self, n_head, d_model, d_k, d_v, d_f, 
-                 drop_rate=0.1, use_conv=False, return_attn=True):
+    def __init__(self, n_head, d_model, d_k, d_v, d_f, drop_rate=0.1, use_conv=False):
         super(Decode_Layer, self).__init__()
-        self.return_attn = return_attn
         self.n_head = n_head
         self.selfattn_masked = MultiHeadAttention(n_head, d_model, d_k, d_v, drop_rate=drop_rate)
         self.dec_enc_attn = MultiHeadAttention(n_head, d_model, d_k, d_v, drop_rate=drop_rate)
@@ -84,7 +82,7 @@ class Decode_Layer(nn.Module):
 # Position Encoding & Embedding Layers
 class PositionalEncoding(nn.Module):
     """Positional Encoding"""
-    def __init__(self, n_pos, d_model, pos_pad_idx=0):
+    def __init__(self, n_pos, d_model, pos_pad_idx=0, sos_idx=None, eos_idx=None):
         """
         n_pos = position length, max sequence length + 1
         """

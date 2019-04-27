@@ -30,7 +30,7 @@ class MultiHeadAttention(nn.Module):
 #         nn.init.normal_(self.linear_v.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_v)))
         
         self.linear_o = nn.Linear(n_head*d_v, d_model)
-        self.attention = ScaledDotProductAttention(d_k)
+        self.attention = ScaledDotProductAttention(d_k, drop_rate)
         self.drop_out = nn.Dropout(drop_rate)
         self.layer_norm = nn.LayerNorm(d_model)
         
@@ -67,7 +67,6 @@ class MultiHeadAttention(nn.Module):
         #  lin_qs = lin_qs.permute(2, 0, 1, 3).contiguous().view(-1, T_q, d_k)
         #  lin_ks = lin_ks.permute(2, 0, 1, 3).contiguous().view(-1, T_k, d_k)
         #  lin_vs = lin_vs.permute(2, 0, 1, 3).contiguous().view(-1, T_v, d_v)
-        
         if mask is not None:
             mask = mask.repeat(n_head, 1, 1)
 
@@ -82,10 +81,9 @@ class MultiHeadAttention(nn.Module):
         # same as 
         #  heads = heads.view(n_head, B, T_q, d_v)
         #  heads_cat = heads.permute(1, 2, 0, 3).contiguous().view(B, T_q, -1)
-
+        
         output = self.linear_o(heads_cat)  # (B, T_q, n_head * d_v) --> (B, T_q, d_model)
-        output = self.drop_out(output)
-        output = self.layer_norm(residual + output)
+        output = self.layer_norm(residual + self.drop_out(output))
 
         return output, attn
     
@@ -129,8 +127,7 @@ class PositionWiseFFN(nn.Module):
         else:
             output = self.fc(x)
             
-        output = self.drop_out(output)
-        output = self.layer_norm(residual + output)
+        output = self.layer_norm(residual + self.drop_out(output))
         
         return output
     

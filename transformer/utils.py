@@ -34,11 +34,36 @@ def get_padding_mask(q, k=None, pad_idx=1, mode='attn'):
         assert False, "error maksing"
     
     
-
-def get_pos(x, pad_idx=1, pos_pad_idx=0):
-    """return postion of tensor function"""
+def get_pos(x, pad_idx=1, sos_idx=None, eos_idx=None, pos_pad_idx=0):
+    """
+    return postion of tensor function
+    pos idx(in the vocabulary):
+     - pad = 0
+     - sos = 1 if exist 
+     - eos = 2 if exist (if only eos exist, eos will be 1)
+    start idx will be 1 or 2 if one exist or 3 if all exist
+    """
+    exists = lambda x: x is not None
+    
+    def process_sos(pos, idx):
+        pos[:, 0] = idx
+        return pos
+    
+    def process_eos(pos, x, eos_idx, pos_eos_idx):
+        eos_mask = (x == eos_idx)
+        pos = (pos+1).masked_fill(eos_mask, pos_eos_idx) 
+        return pos
+        
     B, T = x.size()
     pos = torch.arange(1, T+1, device=x.device).expand(B, -1)
+    if not exists(sos_idx) and exists(eos_idx):
+        pos_eos_idx = 1
+        pos = process_eos(pos, x, eos_idx, pos_eos_idx)
+    elif exists(sos_idx) and exists(eos_idx):
+        pos_eos_idx = 2
+        pos = process_eos(pos, x, eos_idx, pos_eos_idx)
+        pos = process_sos(pos, 1)
+        
     padding_mask = (x == pad_idx)
     pos = pos.masked_fill(padding_mask, pos_pad_idx)
     return pos
@@ -94,7 +119,7 @@ def check_dotproduct_dist(d_k, sampling_size=1, seq_len=1, threshold=1e-10):
     print(f"after divide by sqrt(d_k), count of gradients that smaller than threshod({threshold}) is {g_sum2}, {g_percent2:.2f}% \n")
     
     
-def draw_attentions(n_head, attn):
+def draw_attentions(n_head, attn, return_figs=False):
     """
     to see `n_head` views of attentions
     """
@@ -106,4 +131,6 @@ def draw_attentions(n_head, attn):
         axes[i, j].set_title(f"head: {k}", loc="center", y=1.5)
     plt.tight_layout()
     plt.show()
+    if return_figs:
+        return fig
     

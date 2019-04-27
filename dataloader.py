@@ -14,7 +14,7 @@ class SplitReversibleField(Field):
         if kwargs.get('tokenize') not in ('revtok', 'subword', list):
             kwargs['tokenize'] = 'revtok'
         if 'unk_token' not in kwargs:
-            kwargs['unk_token'] = ' UNK '
+            kwargs['unk_token'] = ' <unk> '
         super(SplitReversibleField, self).__init__(**kwargs)
 
     def reverse(self, batch):

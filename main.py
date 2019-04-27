@@ -35,9 +35,9 @@ def argument_parsing(preparse=False):
                    help="Dimension of value")
     parser.add_argument("-df", "--d_f", type=int, default=2048,
                    help="Dimension of value")
-    parser.add_argument("-pad", "--pad_idx", type=int,
+    parser.add_argument("-pad", "--pad_idx", type=int, 
                    help="Pad index of vocabulary")
-    parser.add_argument("-pospad", "--pos_pad_idx", type=int,
+    parser.add_argument("-pospad", "--pos_pad_idx", type=int, 
                    help="Position pad index")
     parser.add_argument("-drop", "--drop_rate", type=float, default=0.1,
                    help="Drop Rate")
@@ -60,11 +60,21 @@ def argument_parsing(preparse=False):
     parser.add_argument("-b2", "--beta2", type=float, default=0.98,
                    help="Beta2 value for Adam optimizer")
 
-    # training
-    parser.add_argument("-bt","--batch", type=int, default=64,
-                   help="Mini batch size")
+    # training: parse to 'trainer.py'
+    parser.add_argument("-encsos", "--enc_sos_idx", type=int, 
+                   help="Encoder SOS index of vocabulary")
+    parser.add_argument("-enceos", "--enc_eos_idx", type=int, 
+                   help="Encoder EOS index of vocabulary")
+    parser.add_argument("-decsos", "--dec_sos_idx", type=int, 
+                   help="Decoder SOS index of vocabulary")
+    parser.add_argument("-deceos", "--dec_eos_idx", type=int, 
+                   help="Decoder EOS index of vocabulary")
     parser.add_argument("-step","--n_step", type=int, default=30,
                    help="Total Training Step")
+    
+    # others
+    parser.add_argument("-bt","--batch", type=int, default=64,
+                   help="Mini batch size")
     parser.add_argument("-cuda","--use_cuda", action="store_true",
                    help="Use Cuda")
     parser.add_argument("-svp","--save_path", type=str, default="./saved_model/model.pt",
@@ -74,7 +84,7 @@ def argument_parsing(preparse=False):
     parser.add_argument("-vb","--verbose", type=int, default=0,
                    help="verbose")
     parser.add_argument("-met","--metrics_method", type=str, default="acc",
-                   help="verbose")
+                   help="metrics method to use: can choose 'acc' or 'loss'")
     
     
     if preparse:
@@ -83,12 +93,17 @@ def argument_parsing(preparse=False):
     args = parser.parse_args()
     return args
 
+
 def main(args):
-    # configs path to save model
+    # configs path to load data & save model
     from pathlib import Path
+    if not Path(args.root_dir).exists():
+        Path(args.root_dir).mkdir()
+        
     p = Path(args.save_path).parent
     if not p.exists():
         p.mkdir()
+    
     
     
     device = "cuda" if (torch.cuda.is_available() and args.use_cuda) else "cpu"
@@ -99,10 +114,15 @@ def main(args):
     (src, trg), (train, valid, _), (train_loader, valid_loader, _) = get_data(args)
     src_vocab_len = len(src.vocab.stoi)
     trg_vocab_len = len(trg.vocab.stoi)
+    # check vocab size
     print(f"SRC vocab {src_vocab_len}, TRG vocab {trg_vocab_len}")
     enc_max_seq_len = args.max_length
     dec_max_seq_len = args.max_length
-    pad_idx = src.vocab.stoi["<pad>"] if args.pad_idx is None else args.pad_idx
+    pad_idx = src.vocab.stoi.get("<pad>") if args.pad_idx is None else args.pad_idx
+    enc_sos_idx = src.vocab.stoi.get("<s>") if args.enc_sos_idx is None else args.enc_sos_idx
+    enc_eos_idx = src.vocab.stoi.get("</s>") if args.enc_eos_idx is None else args.enc_eos_idx
+    dec_sos_idx = trg.vocab.stoi.get("<s>") if args.dec_sos_idx is None else args.dec_sos_idx
+    dec_eos_idx = trg.vocab.stoi.get("</s>") if args.dec_eos_idx is None else args.dec_eos_idx
     pos_pad_idx = 0 if args.pos_pad_idx is None else args.pos_pad_idx
     
     print("Building Model...")
@@ -116,7 +136,7 @@ def main(args):
                         d_k=args.d_k, 
                         d_v=args.d_v, 
                         d_f=args.d_f, 
-                        pad_idx=pad_idx, 
+                        pad_idx=pad_idx,
                         pos_pad_idx=pos_pad_idx, 
                         drop_rate=args.drop_rate, 
                         use_conv=args.use_conv, 
@@ -127,6 +147,7 @@ def main(args):
         print(f"Load Model {args.load_path}")
         model.load_state_dict(torch.load(args.load_path))
     
+    # build loss function using LabelSmoothing
     loss_function = LabelSmoothing(trg_vocab_size=trg_vocab_len, 
                                    pad_idx=args.pad_idx, 
                                    eps=args.smooth_eps)
@@ -143,6 +164,10 @@ def main(args):
                       n_step=args.n_step, 
                       device=device, 
                       save_path=args.save_path,
+                      enc_sos_idx=enc_sos_idx,
+                      enc_eos_idx=enc_eos_idx,
+                      dec_sos_idx=dec_sos_idx,
+                      dec_eos_idx=dec_eos_idx,
                       metrics_method=args.metrics_method,
                       verbose=args.verbose)
     print("Start Training...")

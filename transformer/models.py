@@ -15,6 +15,8 @@ class Encoder(nn.Module):
         self.pad_idx = pad_idx
         self.drop_out = nn.Dropout(drop_rate)
         self.embed_layer = Embedding(vocab_len, d_model, padding_idx=pad_idx)
+        # position embedding have to add 3 if there are <s>, </s> token including pad token
+#         n_pos = max_seq_len + sum([1 for x in (pad_idx, sos_idx, eos_idx) if x is not None])
         self.pos_layer = PositionalEncoding(max_seq_len+1, d_model, pos_pad_idx=pos_pad_idx)
         self.layers = nn.ModuleList([Encode_Layer(n_head, d_model, d_k, d_v, d_f, 
                                                   drop_rate=drop_rate, 
@@ -59,6 +61,8 @@ class Decoder(nn.Module):
         self.pad_idx = pad_idx
         self.dropout = nn.Dropout(drop_rate)
         self.embed_layer = Embedding(vocab_len, d_model, padding_idx=pad_idx)
+        # position embedding have to add 3 if there are <s>, </s> token including pad token
+#         n_pos = max_seq_len + sum([1 for x in (pad_idx, sos_idx, eos_idx) if x is not None])
         self.pos_layer = PositionalEncoding(max_seq_len+1, d_model, pos_pad_idx=pos_pad_idx)
         self.layers = nn.ModuleList([Decode_Layer(n_head, d_model, d_k, d_v, d_f, 
                                                   drop_rate=drop_rate, 
@@ -113,8 +117,7 @@ class Transformer(nn.Module):
     """Transformer Model"""
     def __init__(self, enc_vocab_len, enc_max_seq_len, dec_vocab_len, dec_max_seq_len, 
                  n_layer, n_head, d_model, d_k, d_v, d_f, 
-                 pad_idx=1, pos_pad_idx=0, drop_rate=0.1, use_conv=False,
-                 linear_weight_share=True, embed_weight_share=False):
+                 pad_idx=1, pos_pad_idx=0, drop_rate=0.1, use_conv=False, linear_weight_share=True, embed_weight_share=False):
         super(Transformer, self).__init__()
         self.pad_idx = pad_idx
         self.d_model = d_model
@@ -123,7 +126,7 @@ class Transformer(nn.Module):
                                d_model, d_k, d_v, d_f, 
                                pad_idx=pad_idx, 
                                pos_pad_idx=pos_pad_idx,
-                               drop_rate=drop_rate, 
+                               drop_rate=drop_rate,
                                use_conv=use_conv)
         self.decoder = Decoder(dec_vocab_len, dec_max_seq_len, n_layer, n_head, 
                                d_model, d_k, d_v, d_f,
@@ -136,9 +139,6 @@ class Transformer(nn.Module):
             # share the same weight matrix between the decoder embedding layer 
             # and the pre-softmax linear transformation
             self.projection.weight = self.decoder.embed_layer.embedding.weight
-            self.x_logit_scale = (d_model ** -0.5)
-        else:
-            self.x_logit_scale = 1.
         
         if embed_weight_share:
             # share the same weight matrix between the decoder embedding layer 
@@ -151,16 +151,21 @@ class Transformer(nn.Module):
         Inputs:
         * enc: (B, T_e)
         * enc_pos: (B, T_e)
-        * dec: (B, T_d)
-        * dec_pos: (B, T_d)
+        * dec: (B, T_d)      > note that real input is (B, T_d - 1)
+        * dec_pos: (B, T_d)  > note that real input is (B, T_d - 1)
         -------------------------------------
         Outputs:
-        * dec_output: (B, T_d, V)
+        * dec_output: (B, T_d - 1, V)
         * attns_dict:
             * enc_self_attns: n_layers * (n_head, B, T_e, T_e)
-            * dec_self_attns: n_layers * (n_head, B, T_d, T_d)
+            * dec_self_attns: n_layers * (n_head, B, T_d - 1, T_d - 1)
             * dec_enc_attns: n_layers * (n_haed, B, T_d, T_e)
         """
+        
+        # given previous dec inputs predict next dec
+        dec = dec[:, :-1]
+        dec_pos = dec_pos[:, :-1]
+        
         if return_attn:
             enc_output, enc_self_attns = self.encoder(enc, enc_pos, return_attn)
             dec_output, (dec_self_attns, dec_enc_attns) = self.decoder(dec, dec_pos, enc, enc_output, return_attn)
@@ -172,5 +177,5 @@ class Transformer(nn.Module):
         else:
             enc_output = self.encoder(enc, enc_pos, return_attn)
             dec_output = self.decoder(dec, dec_pos, enc, enc_output, return_attn)
-            dec_output = self.projection(dec_output) * self.x_logit_scale
+            dec_output = self.projection(dec_output)
             return dec_output

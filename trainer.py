@@ -1,15 +1,24 @@
 import torch
+from pathlib import Path
 import numpy as np
 from transformer.utils import get_pos
 from tqdm import tqdm
 
 class Trainer(object):
     """model trainer: torchtext"""
-    def __init__(self, optimizer, train_loader, test_loader, n_step, device, save_path, metrics_method="acc", verbose=0):
-        
+    def __init__(self, optimizer, train_loader, test_loader, n_step, device, save_path, 
+                 enc_sos_idx=None, enc_eos_idx=None, dec_sos_idx=None, dec_eos_idx=None, metrics_method="acc", verbose=0):
+        if not Path("trainlog/").exists():
+            Path("trainlog").mkdir()
         self.save_path = save_path
+        self.record_path = Path("trainlog/")/("train-log-"+ save_path.split("/")[-1].split('.')[0] +".txt")
+        
         self.n_step = n_step
         self.device = device
+        self.enc_sos_idx = enc_sos_idx
+        self.enc_eos_idx = enc_eos_idx
+        self.dec_sos_idx = dec_sos_idx
+        self.dec_eos_idx = dec_eos_idx
         
         self.optimizer = optimizer
         self.train_loader = train_loader
@@ -42,22 +51,28 @@ class Trainer(object):
             train_accs.append(train_acc)
             test_losses.append(test_loss)
             test_accs.append(test_acc)
+            
             self._print(step, train_loss, test_loss, train_acc, test_acc)
             if self.metrics_method == "acc":
                 test_metrics, test_metrics_list = test_acc, test_accs
             elif self.metrics_method == "loss":
                 test_metrics, test_metrics_list = test_loss, test_losses
-            lowest_metrics = self.save_model(model, test_metrics, test_metrics_list, lowest_metrics)
-#             if test_acc == 1.0:
-#                 print(" - early break!!")
-#                 break
-
+            lowest_metrics, early_break = self.save_model(model, test_metrics, test_metrics_list, lowest_metrics)
+            if early_break:
+                print(" - early break!!")
+                break
+                
+        # Save Log for drawing graph
+        np.savetxt("trainlog/losses-accs-" + self.save_path.split("/")[-1].split('.')[0] +".txt", 
+                   np.array([train_losses, train_accs, test_losses, test_accs]), fmt="%.4e")
+        # Time
         end_time = time.time()
         total_time = end_time-start_time
         hour = int(total_time // (60*60))
         minute = int((total_time - hour*60*60) // 60)
         second = total_time - hour*60*60 - minute*60
-        print('\nTraining Excution time with validation: {:d} h {:d} m {:.4f} s'.format(hour, minute, second))
+        txt = f"\nTraining Excution time with validation: {hour:d} h {minute:d} m {second:.4f} s"
+        self._print_record(txt)
         
     def train(self, model, loss_function, step):
         """train model"""
@@ -78,18 +93,20 @@ class Trainer(object):
             src, trg = batch.src, batch.trg
             batch_size = src.size(0)
             
-            src_pos = get_pos(src)
-            trg_pos = get_pos(trg)
+            src_pos = get_pos(src, model.pad_idx, self.enc_sos_idx, self.enc_eos_idx)
+            trg_pos = get_pos(trg, model.pad_idx, self.dec_sos_idx, self.dec_eos_idx)
             
             self.optimizer.zero_grad()
             output = model(src, src_pos, trg, trg_pos)
-            loss = loss_function(output, trg) 
+            
+            real_trg = trg[:, 1:].contiguous()
+            loss = loss_function(output, real_trg) 
             loss.backward()
             self.optimizer.step()
             # record
             train_loss += loss.item()
             pred = self.tocpu(output).view(-1, output.size(-1))
-            n_correct += (pred.argmax(-1) == self.tocpu(trg).view(-1)).sum().item()
+            n_correct += (pred.argmax(-1) == self.tocpu(real_trg).view(-1)).sum().item()
             n_word += trg.ne(model.pad_idx).sum().item()
             train_acc = n_correct / n_word
             
@@ -106,40 +123,58 @@ class Trainer(object):
             for batch in self.test_loader:
                 src, trg = batch.src, batch.trg
                 
-                src_pos = get_pos(src)
-                trg_pos = get_pos(trg)
+                src_pos = get_pos(src, model.pad_idx, self.enc_sos_idx, self.enc_eos_idx)
+                trg_pos = get_pos(trg, model.pad_idx, self.dec_sos_idx, self.dec_eos_idx)
                 
                 output = model(src, src_pos, trg, trg_pos)
-                loss = loss_function(output, trg) 
+                
+                real_trg = trg[:, 1:].contiguous()
+                loss = loss_function(output, real_trg) 
                 
                 # record
                 test_loss += loss.item()
                 pred = self.tocpu(output).view(-1, output.size(-1))
-                n_correct += (pred.argmax(-1) == self.tocpu(trg).view(-1)).sum().item()
+                n_correct += (pred.argmax(-1) == self.tocpu(real_trg).view(-1)).sum().item()
                 n_word += trg.ne(model.pad_idx).sum().item()
                 test_acc = n_correct / n_word
                 
                 
         return test_loss / n_word, test_acc
     
-    def _print(self, step, train_loss, test_loss, train_acc, test_acc):
-        """print log"""
-        print("[{}/{}] Training Result".format(step, self.n_step))
-        print("  - train_acc: {:.2f}%\t test_acc: {:.2f}%".format(train_acc*100, test_acc*100))
-        print("  - train_ppl: {:8.4f}\t test_ppl: {:8.4f}".format(np.exp(min(train_loss, 100)), np.exp(min(test_loss, 100))))
-    
     def save_model(self, model, test_metrics, test_metrics_list, lowest_metrics):
         """early stopping"""
+        early_break = False
         if len(test_metrics_list) >= 2:
             if self.metrics_method == "acc":
                 if test_metrics >= lowest_metrics:
                     torch.save(model.state_dict(), self.save_path)
                     lowest_metrics = test_metrics
-                    print("  - discard previous state, best model state saved!")
+                    self._print_record("  - discard previous state, best model state saved!")
+                if lowest_metrics == 1.0:
+                    early_break = True
+                    
             elif self.metrics_method == "loss":
                 if test_metrics <= lowest_metrics:
                     torch.save(model.state_dict(), self.save_path)
                     lowest_metrics = test_metrics
-                    print("  - discard previous state, best model state saved!")
+                    self._print_record("  - discard previous state, best model state saved!") 
+                if lowest_metrics == 0.0:
+                    # TODO: change early break for 'loss' method
+                    early_break = True
+                    
+        return lowest_metrics, early_break   
+    
+    def _print(self, step, train_loss, test_loss, train_acc, test_acc):
+        """print log"""
+        print_list = []
+        print_list += [f"[{step}/{self.n_step}] Training Result"]
+        print_list += [f"  - train_acc: {train_acc*100:.2f}%\t test_acc: {test_acc*100:.2f}%"]
+        print_list += [f"  - train_ppl: {np.exp(min(train_loss, 100)):8.4f}\t test_ppl: {np.exp(min(test_loss, 100)):8.4f}"]
+        for txt in print_list:
+            self._print_record(txt)
 
-        return lowest_metrics
+    
+    def _print_record(self, txt):
+        print(txt)
+        with open(self.record_path, "a") as config:
+            config.write(txt+"\n")

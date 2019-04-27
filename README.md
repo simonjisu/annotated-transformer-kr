@@ -38,6 +38,8 @@ Google Translated Sentence:
    ein junger lassie aussehender hund ist im schnee.
 ```
 
+Showing the 6-th layer of trg-src sentence attention with 8 heads.
+
 ![dec_enc_attns-6](figs/dec_enc_attns-6.png)
 
 

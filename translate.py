@@ -11,7 +11,10 @@ from main import argument_parsing
 from dataloader import get_data
 
 def get_model(sh_path):
-    arguments = " ".join([s.strip() for s in Path(sh_path).read_text().replace("\\", "").replace('"', "").splitlines()[1:-1]])
+    if sh_path.count(".", 0, 2) == 2:
+        arguments = " ".join([s.strip() for s in Path(sh_path).read_text().replace("\\", "").replace('"', "").replace("./", "../").splitlines()[1:-1]])
+    else:
+        arguments = " ".join([s.strip() for s in Path(sh_path).read_text().replace("\\", "").replace('"', "").splitlines()[1:-1]])
     parser = argument_parsing(preparse=True)
     args = parser.parse_args(arguments.split())
 
@@ -48,17 +51,10 @@ def get_model(sh_path):
     return model, (src, trg), (test, test_loader)
 
 
-def greedy_decode(model, max_length, src_data, trg_data, src_field, trg_field, 
+def greedy_decode(model, max_length, src_data, src_field, trg_field,
                   enc_sos_idx=None, enc_eos_idx=None, dec_sos_idx=None, dec_eos_idx=None, device='cpu'):
-    
-    def get_real_attn(maxlen, attns_list):
-        return [attn[:, :, :maxlen, :maxlen] for attn in attns_list]
-        
+    # src tensor   
     src_tensor = src_field.process([src_data]).to(device)
-    trg_tensor = trg_field.process([trg_data]).to(device)
-    # calculate real max lengths of sentences
-    src_maxlen = src_tensor.ne(1).sum().item()
-    trg_maxlen = trg_tensor.ne(1).sum().item()
     # get src sentence positions
     src_pos = get_pos(src_tensor, model.pad_idx, enc_sos_idx, enc_eos_idx)
     
@@ -79,8 +75,37 @@ def greedy_decode(model, max_length, src_data, trg_data, src_field, trg_field,
             else:
                 dec_tensor = torch.cat([dec_tensor, pred.unsqueeze(-1)], dim=1)
                 dec_pos = get_pos(dec_tensor, model.pad_idx, dec_sos_idx, dec_eos_idx)        
-            
-    attns_dict = {'enc_self_attns': get_real_attn(src_maxlen, enc_self_attns), 
-                  'dec_self_attns': get_real_attn(trg_maxlen, dec_self_attns),
-                  'dec_enc_attns': get_real_attn(trg_maxlen, dec_enc_attns)}
+
+    attns_dict = {'enc_self_attns': enc_self_attns, 
+                  'dec_self_attns': dec_self_attns,
+                  'dec_enc_attns': dec_enc_attns}
     return dec_tensor, attns_dict
+
+
+if __name__ == "__main__":
+
+    model, (src, trg), (test, test_loader) = get_model("./run-main.sh")
+    rand_idx = torch.randint(0, len(test), (1,))
+    rand_data = test.examples[rand_idx]
+
+    dec_tensor, _ = greedy_decode(model, 
+                                  max_length=50, 
+                                  src_data=rand_data.src, 
+                                  src_field=src, 
+                                  trg_field=trg,
+                                  dec_sos_idx=trg.vocab.stoi["<s>"], 
+                                  dec_eos_idx=trg.vocab.stoi["</s>"],
+                                  device="cuda" if torch.cuda.is_available() else "cpu")
+    
+    decode = lambda x: [trg.vocab.itos[i] if trg.vocab.itos[i] else trg.vocab.stoi[0] for i in x]
+    src_sent = "".join(rand_data.src).strip().replace("  ", " ")
+    trg_sent = "".join(rand_data.trg).strip().replace("  ", " ")
+    pred_sent = "".join(decode(dec_tensor.squeeze().tolist())).replace("  ", " ")
+    print("Source Sentence:")
+    print("  ",src_sent)
+    print("Target Sentence:")
+    print("  ",trg_sent)
+    print("Predicted Sentence:")
+    print("  ",pred_sent.split("<s>")[1][1:])
+    print("Google Translated Sentence:")
+    print("  ","a young dog is looking in the snow.")

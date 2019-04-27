@@ -119,16 +119,21 @@ def check_dotproduct_dist(d_k, sampling_size=1, seq_len=1, threshold=1e-10):
     print(f"after divide by sqrt(d_k), count of gradients that smaller than threshod({threshold}) is {g_sum2}, {g_percent2:.2f}% \n")
     
     
-def draw_attentions(n_head, attn, return_figs=False):
+def draw_attentions(n_head, attn, tokens=None, return_figs=False):
     """
     to see `n_head` views of attentions
     """
-    fig, axes = plt.subplots(2, 4, dpi=100)
+    fig, axes = plt.subplots(2, 4, figsize=(16, 8))
     for k in range(n_head):
         i = k % 2
         j = k // 2
         axes[i, j].matshow(attn[k].squeeze().numpy(), cmap="binary")
-        axes[i, j].set_title(f"head: {k}", loc="center", y=1.5)
+        axes[i, j].set_title(f"head: {k}", loc="center", y=1.25, fontsize=20)
+        if tokens is not None:
+            axes[i, j].set_xticks(list(range(len(tokens[0]))))
+            axes[i, j].set_yticks(list(range(len(tokens[1]))))
+            axes[i, j].set_xticklabels(tokens[0], rotation=45)
+            axes[i, j].set_yticklabels(tokens[1])
     plt.tight_layout()
     plt.show()
     if return_figs:

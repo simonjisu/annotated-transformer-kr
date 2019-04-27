@@ -23,7 +23,24 @@ Trained 35 Steps using NVIDIA GTX 1080 ti, Training excution time with validatio
 
 ![](figs/perplexity-acc.png)
 
-Check `Transformer.ipynb` to see translate a sample sentence
+You can run `python translate.py` to see translate a random sample sentence.
+
+For Example the attention weights(trg-src weight) are something like figure below. You can check all attentions in `figs` folder.
+
+```
+Source Sentence:
+   a young lassie looking dog is in the snow .
+Target Sentence:
+   ein junger hund , der aussieht wie lassie , im schnee .
+Predicted Sentence:
+   ein junger hund schaut im schnee . 
+Google Translated Sentence:
+   a young dog is looking in the snow.
+```
+
+![dec_enc_attns-6](figs/dec_enc_attns-6.png)
+
+
 
 ### Requirements
 

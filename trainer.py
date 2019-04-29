@@ -12,6 +12,8 @@ class Trainer(object):
             Path("trainlog").mkdir()
         self.save_path = save_path
         self.record_path = Path("trainlog/")/("train-log-"+ save_path.split("/")[-1].split('.')[0] +".txt")
+        if Path(self.record_path).exists():
+            Path(self.record_path).unlink()
         
         self.n_step = n_step
         self.device = device

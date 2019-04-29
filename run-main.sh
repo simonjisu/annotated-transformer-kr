@@ -18,7 +18,7 @@ nohup python3 -u main.py \
     -b1 0.9 \
     -b2 0.98 \
     -bt 128 \
-    -step 35 \
+    -step 30 \
     -cuda \
     -vb 1 \
     -met "acc" \

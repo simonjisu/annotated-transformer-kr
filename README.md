@@ -19,7 +19,7 @@ $ sh run-main.sh
 
 ### Performance: Training Multi30k Result
 
-Trained 35 Steps using NVIDIA GTX 1080 ti, Training excution time with validation: 0 h 43 m 9.6019 s
+Trained 30 Steps using NVIDIA GTX 1080 ti, Training excution time with validation: 0 h 36 m 36.5517 s
 
 ![](figs/perplexity-acc.png)
 

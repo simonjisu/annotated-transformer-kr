@@ -162,7 +162,7 @@ class Transformer(nn.Module):
             * dec_enc_attns: n_layers * (n_haed, B, T_d, T_e)
         """
         
-        # given previous dec inputs predict next dec
+        # shifted right: given previous dec inputs predict next dec
         dec = dec[:, :-1]
         dec_pos = dec_pos[:, :-1]
         

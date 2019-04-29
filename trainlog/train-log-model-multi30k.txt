@@ -1,123 +1,100 @@
-[1/35] Training Result
-  - train_acc: 20.10%	 test_acc: 31.51%
-  - train_ppl: 101.8014	 test_ppl:  29.2107
-[2/35] Training Result
-  - train_acc: 35.70%	 test_acc: 40.90%
-  - train_ppl:  20.1589	 test_ppl:  13.5202
+[1/30] Training Result
+  - train_acc: 20.30%	 test_acc: 31.58%
+  - train_ppl: 104.7091	 test_ppl:  29.4769
+[2/30] Training Result
+  - train_acc: 36.07%	 test_acc: 40.83%
+  - train_ppl:  19.8998	 test_ppl:  13.5869
   - discard previous state, best model state saved!
-[3/35] Training Result
-  - train_acc: 42.24%	 test_acc: 45.55%
-  - train_ppl:  11.7457	 test_ppl:   9.1407
+[3/30] Training Result
+  - train_acc: 42.86%	 test_acc: 46.33%
+  - train_ppl:  11.4572	 test_ppl:   8.9959
   - discard previous state, best model state saved!
-[4/35] Training Result
-  - train_acc: 46.83%	 test_acc: 49.32%
-  - train_ppl:   8.2455	 test_ppl:   6.9922
+[4/30] Training Result
+  - train_acc: 47.44%	 test_acc: 49.82%
+  - train_ppl:   8.0090	 test_ppl:   6.8205
   - discard previous state, best model state saved!
-[5/35] Training Result
-  - train_acc: 50.39%	 test_acc: 52.03%
-  - train_ppl:   6.3965	 test_ppl:   5.7373
+[5/30] Training Result
+  - train_acc: 51.12%	 test_acc: 51.98%
+  - train_ppl:   6.1588	 test_ppl:   5.6829
   - discard previous state, best model state saved!
-[6/35] Training Result
-  - train_acc: 53.28%	 test_acc: 54.02%
-  - train_ppl:   5.2161	 test_ppl:   5.0383
+[6/30] Training Result
+  - train_acc: 54.25%	 test_acc: 53.94%
+  - train_ppl:   4.9920	 test_ppl:   4.9475
   - discard previous state, best model state saved!
-[7/35] Training Result
-  - train_acc: 55.87%	 test_acc: 55.67%
-  - train_ppl:   4.4106	 test_ppl:   4.5791
+[7/30] Training Result
+  - train_acc: 56.98%	 test_acc: 55.89%
+  - train_ppl:   4.2023	 test_ppl:   4.4956
   - discard previous state, best model state saved!
-[8/35] Training Result
-  - train_acc: 58.40%	 test_acc: 56.56%
-  - train_ppl:   3.8219	 test_ppl:   4.3563
+[8/30] Training Result
+  - train_acc: 59.73%	 test_acc: 56.34%
+  - train_ppl:   3.6098	 test_ppl:   4.3140
   - discard previous state, best model state saved!
-[9/35] Training Result
-  - train_acc: 60.65%	 test_acc: 57.64%
-  - train_ppl:   3.3716	 test_ppl:   4.1395
+[9/30] Training Result
+  - train_acc: 62.26%	 test_acc: 57.86%
+  - train_ppl:   3.1548	 test_ppl:   4.1077
   - discard previous state, best model state saved!
-[10/35] Training Result
-  - train_acc: 62.81%	 test_acc: 58.26%
-  - train_ppl:   3.0266	 test_ppl:   4.0663
-  - discard previous state, best model state saved!
-[11/35] Training Result
-  - train_acc: 64.85%	 test_acc: 58.41%
-  - train_ppl:   2.7488	 test_ppl:   4.0754
-  - discard previous state, best model state saved!
-[12/35] Training Result
-  - train_acc: 66.88%	 test_acc: 58.11%
-  - train_ppl:   2.5263	 test_ppl:   4.1274
-[13/35] Training Result
-  - train_acc: 68.78%	 test_acc: 58.43%
-  - train_ppl:   2.3489	 test_ppl:   4.2064
-  - discard previous state, best model state saved!
-[14/35] Training Result
-  - train_acc: 70.24%	 test_acc: 57.90%
-  - train_ppl:   2.2239	 test_ppl:   4.2940
-[15/35] Training Result
-  - train_acc: 71.22%	 test_acc: 58.11%
-  - train_ppl:   2.1357	 test_ppl:   4.3628
-[16/35] Training Result
-  - train_acc: 72.15%	 test_acc: 58.01%
-  - train_ppl:   2.0724	 test_ppl:   4.4055
-[17/35] Training Result
-  - train_acc: 72.66%	 test_acc: 57.74%
-  - train_ppl:   2.0354	 test_ppl:   4.5608
-[18/35] Training Result
-  - train_acc: 72.86%	 test_acc: 57.76%
-  - train_ppl:   2.0170	 test_ppl:   4.5970
-[19/35] Training Result
-  - train_acc: 73.99%	 test_acc: 57.42%
-  - train_ppl:   1.9459	 test_ppl:   4.6381
-[20/35] Training Result
-  - train_acc: 75.31%	 test_acc: 57.89%
-  - train_ppl:   1.8641	 test_ppl:   4.6689
-[21/35] Training Result
-  - train_acc: 76.82%	 test_acc: 58.09%
-  - train_ppl:   1.7788	 test_ppl:   4.8016
-[22/35] Training Result
-  - train_acc: 77.94%	 test_acc: 58.16%
-  - train_ppl:   1.7174	 test_ppl:   4.8737
-[23/35] Training Result
-  - train_acc: 79.15%	 test_acc: 58.44%
-  - train_ppl:   1.6540	 test_ppl:   4.9169
-  - discard previous state, best model state saved!
-[24/35] Training Result
-  - train_acc: 80.08%	 test_acc: 58.30%
-  - train_ppl:   1.6092	 test_ppl:   4.9415
-[25/35] Training Result
-  - train_acc: 81.04%	 test_acc: 57.98%
-  - train_ppl:   1.5641	 test_ppl:   4.9890
-[26/35] Training Result
-  - train_acc: 81.96%	 test_acc: 58.62%
-  - train_ppl:   1.5234	 test_ppl:   5.0156
-  - discard previous state, best model state saved!
-[27/35] Training Result
-  - train_acc: 82.67%	 test_acc: 57.82%
-  - train_ppl:   1.4887	 test_ppl:   5.1209
-[28/35] Training Result
-  - train_acc: 83.30%	 test_acc: 58.46%
-  - train_ppl:   1.4610	 test_ppl:   5.1548
-[29/35] Training Result
-  - train_acc: 83.88%	 test_acc: 58.63%
-  - train_ppl:   1.4352	 test_ppl:   5.1704
-  - discard previous state, best model state saved!
-[30/35] Training Result
-  - train_acc: 84.55%	 test_acc: 58.74%
-  - train_ppl:   1.4097	 test_ppl:   5.2026
-  - discard previous state, best model state saved!
-[31/35] Training Result
-  - train_acc: 85.10%	 test_acc: 58.57%
-  - train_ppl:   1.3870	 test_ppl:   5.2967
-[32/35] Training Result
-  - train_acc: 85.55%	 test_acc: 58.79%
-  - train_ppl:   1.3686	 test_ppl:   5.3478
-  - discard previous state, best model state saved!
-[33/35] Training Result
-  - train_acc: 85.94%	 test_acc: 58.71%
-  - train_ppl:   1.3503	 test_ppl:   5.3915
-[34/35] Training Result
-  - train_acc: 86.34%	 test_acc: 58.44%
-  - train_ppl:   1.3343	 test_ppl:   5.4774
-[35/35] Training Result
-  - train_acc: 86.67%	 test_acc: 58.65%
-  - train_ppl:   1.3218	 test_ppl:   5.3861
+[10/30] Training Result
+  - train_acc: 64.77%	 test_acc: 57.38%
+  - train_ppl:   2.7971	 test_ppl:   4.1361
+[11/30] Training Result
+  - train_acc: 67.40%	 test_acc: 57.42%
+  - train_ppl:   2.5051	 test_ppl:   4.1797
+[12/30] Training Result
+  - train_acc: 69.65%	 test_acc: 57.42%
+  - train_ppl:   2.2827	 test_ppl:   4.3255
+[13/30] Training Result
+  - train_acc: 71.85%	 test_acc: 57.47%
+  - train_ppl:   2.1108	 test_ppl:   4.4039
+[14/30] Training Result
+  - train_acc: 73.60%	 test_acc: 57.66%
+  - train_ppl:   1.9875	 test_ppl:   4.5134
+[15/30] Training Result
+  - train_acc: 74.75%	 test_acc: 56.64%
+  - train_ppl:   1.9062	 test_ppl:   4.7642
+[16/30] Training Result
+  - train_acc: 75.62%	 test_acc: 56.85%
+  - train_ppl:   1.8545	 test_ppl:   4.8377
+[17/30] Training Result
+  - train_acc: 76.13%	 test_acc: 56.97%
+  - train_ppl:   1.8255	 test_ppl:   4.8630
+[18/30] Training Result
+  - train_acc: 76.30%	 test_acc: 57.18%
+  - train_ppl:   1.8149	 test_ppl:   4.9305
+[19/30] Training Result
+  - train_acc: 77.25%	 test_acc: 56.77%
+  - train_ppl:   1.7590	 test_ppl:   5.0088
+[20/30] Training Result
+  - train_acc: 78.69%	 test_acc: 57.15%
+  - train_ppl:   1.6826	 test_ppl:   4.9702
+[21/30] Training Result
+  - train_acc: 80.09%	 test_acc: 56.99%
+  - train_ppl:   1.6150	 test_ppl:   5.1638
+[22/30] Training Result
+  - train_acc: 81.21%	 test_acc: 57.22%
+  - train_ppl:   1.5620	 test_ppl:   5.2321
+[23/30] Training Result
+  - train_acc: 82.27%	 test_acc: 57.21%
+  - train_ppl:   1.5136	 test_ppl:   5.3127
+[24/30] Training Result
+  - train_acc: 83.20%	 test_acc: 56.87%
+  - train_ppl:   1.4724	 test_ppl:   5.4043
+[25/30] Training Result
+  - train_acc: 84.08%	 test_acc: 57.32%
+  - train_ppl:   1.4356	 test_ppl:   5.4761
+[26/30] Training Result
+  - train_acc: 84.73%	 test_acc: 57.16%
+  - train_ppl:   1.4061	 test_ppl:   5.5943
+[27/30] Training Result
+  - train_acc: 85.47%	 test_acc: 57.71%
+  - train_ppl:   1.3771	 test_ppl:   5.5715
+[28/30] Training Result
+  - train_acc: 85.93%	 test_acc: 57.76%
+  - train_ppl:   1.3568	 test_ppl:   5.6009
+[29/30] Training Result
+  - train_acc: 86.55%	 test_acc: 57.41%
+  - train_ppl:   1.3314	 test_ppl:   5.7050
+[30/30] Training Result
+  - train_acc: 86.99%	 test_acc: 57.68%
+  - train_ppl:   1.3139	 test_ppl:   5.6227
 
-Training Excution time with validation: 0 h 43 m 9.6019 s
+Training Excution time with validation: 0 h 36 m 36.5517 s

@@ -30,7 +30,7 @@ class MultiHeadAttention(nn.Module):
 #         nn.init.normal_(self.linear_v.weight, mean=0, std=np.sqrt(2.0 / (d_model + d_v)))
         
         self.linear_o = nn.Linear(n_head*d_v, d_model)
-        self.attention = ScaledDotProductAttention(d_k, drop_rate)
+        self.attention = ScaledDotProductAttention(d_k)
         self.drop_out = nn.Dropout(drop_rate)
         self.layer_norm = nn.LayerNorm(d_model)
         

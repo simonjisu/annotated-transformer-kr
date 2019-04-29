@@ -107,5 +107,3 @@ if __name__ == "__main__":
     print("  ",trg_sent)
     print("Predicted Sentence:")
     print("  ",pred_sent.split("<s>")[1][1:])
-    print("Google Translated Sentence:")
-    print("  ","a young dog is looking in the snow.")

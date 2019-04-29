@@ -7,10 +7,9 @@ import torch.nn as nn
 
 class ScaledDotProductAttention(nn.Module):
     """Scaled Dot-Product Attention"""
-    def __init__(self, d_k, drop_rate=0.1):
+    def __init__(self, d_k):
         super(ScaledDotProductAttention, self).__init__()
         self.d_k = d_k
-        self.drop_out = nn.Dropout(drop_rate)
         
     def forward(self, q, k, v, mask=None):
         """
@@ -41,7 +40,6 @@ class ScaledDotProductAttention(nn.Module):
         # fill all nan to zero
         mask_nan = torch.isnan(attn)
         attn = attn.masked_fill(mask_nan, 0)
-        attn = self.drop_out(attn)
         
         output = torch.bmm(attn, v)  # (B, T_q, T_k) * (B, T_v, d_v) --> (B, T_q, d_v), make sure that T_k == T_v
   

@@ -29,6 +29,7 @@ class LabelSmoothing(nn.Module):
         self.pad_idx = pad_idx
         self.eps = eps
         self.trg_vocab_size = trg_vocab_size
+        self.smoothed_dist = None
         
     def forward(self, x, t):
         """

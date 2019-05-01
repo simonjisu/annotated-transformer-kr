@@ -21,7 +21,7 @@ def get_padding_mask(q, k=None, pad_idx=1, mode='attn'):
         assert k is not None, "must have key sequences"
         padding_mask = k.eq(pad_idx)
         padding_mask = padding_mask.unsqueeze(1).expand(B, q_len, -1)
-        row_pad = q.eq(1).unsqueeze(-1).expand(B, q_len, k_len)
+        row_pad = q.eq(pad_idx).unsqueeze(-1).expand(B, q_len, k_len)
         padding_mask = (padding_mask + row_pad).ge(1)
         return padding_mask
     elif mode =='subseq':

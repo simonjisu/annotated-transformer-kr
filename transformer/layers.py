@@ -16,7 +16,6 @@ class Encode_Layer(nn.Module):
         self.selfattn = MultiHeadAttention(n_head, d_model, d_k, d_v, drop_rate=drop_rate)
         self.pwffn = PositionWiseFFN(d_model, d_f, drop_rate=drop_rate, use_conv=use_conv)
         
-#     def forward(self, enc_input, enc_mask=None, non_pad_mask=None):
     def forward(self, enc_input, enc_mask=None):
 
         """

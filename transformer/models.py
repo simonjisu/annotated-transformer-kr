@@ -15,8 +15,6 @@ class Encoder(nn.Module):
         self.pad_idx = pad_idx
         self.drop_out = nn.Dropout(drop_rate)
         self.embed_layer = Embedding(vocab_len, d_model, padding_idx=pad_idx)
-        # position embedding have to add 3 if there are <s>, </s> token including pad token
-#         n_pos = max_seq_len + sum([1 for x in (pad_idx, sos_idx, eos_idx) if x is not None])
         self.pos_layer = PositionalEncoding(max_seq_len+1, d_model, pos_pad_idx=pos_pad_idx)
         self.layers = nn.ModuleList([Encode_Layer(n_head, d_model, d_k, d_v, d_f, 
                                                   drop_rate=drop_rate, 
@@ -61,8 +59,6 @@ class Decoder(nn.Module):
         self.pad_idx = pad_idx
         self.dropout = nn.Dropout(drop_rate)
         self.embed_layer = Embedding(vocab_len, d_model, padding_idx=pad_idx)
-        # position embedding have to add 3 if there are <s>, </s> token including pad token
-#         n_pos = max_seq_len + sum([1 for x in (pad_idx, sos_idx, eos_idx) if x is not None])
         self.pos_layer = PositionalEncoding(max_seq_len+1, d_model, pos_pad_idx=pos_pad_idx)
         self.layers = nn.ModuleList([Decode_Layer(n_head, d_model, d_k, d_v, d_f, 
                                                   drop_rate=drop_rate, 
@@ -159,7 +155,7 @@ class Transformer(nn.Module):
         * attns_dict:
             * enc_self_attns: n_layers * (n_head, B, T_e, T_e)
             * dec_self_attns: n_layers * (n_head, B, T_d - 1, T_d - 1)
-            * dec_enc_attns: n_layers * (n_haed, B, T_d, T_e)
+            * dec_enc_attns: n_layers * (n_haed, B, T_d - 1, T_e)
         """
         
         # shifted right: given previous dec inputs predict next dec

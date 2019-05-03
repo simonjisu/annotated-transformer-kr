@@ -48,7 +48,7 @@ class LabelSmoothing(nn.Module):
         if self.eps == 0.0:
             return self.criterion(pred, target)
         # onehot encoding
-        delta_ky = torch.zeros_like(pred).scatter(dim=1, index=target.unsqueeze(1), source=1)
+        delta_ky = torch.zeros_like(pred).scatter(dim=1, index=target.unsqueeze(1), value=1)
         # smoothing
         smoothed_dist = (1 - self.eps) * delta_ky + (1 - delta_ky) * self.eps / (self.trg_vocab_size - 1)
         smoothed_dist[:, self.pad_idx] = 0.0

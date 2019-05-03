@@ -1,8 +1,48 @@
 import spacy
+from konlpy.tag import Mecab
 import torch
 import torchtext.datasets as datasets
 from torchtext import datasets
 from torchtext.data import Field, BucketIterator, TabularDataset
+from torchtext.datasets import TranslationDataset
+from pathlib import Path
+
+class KoEn(TranslationDataset):
+    """ref: https://github.com/jungyeul/korean-parallel-corpora"""
+    urls = []
+    name = 'koen'
+    dirname = ''
+
+    @classmethod
+    def splits(cls, exts, fields, root='./data/korean-parallel-corpora',
+               train='korean-english-park.train', 
+               validation='korean-english-park.dev', 
+               test='korean-english-park.test', **kwargs):
+        """
+        Create dataset objects for splits of the KO-EN translation dataset.
+        Arguments:
+            exts: A tuple containing the extensions for each language. Must be
+                either ('.ko', '.en') or the reverse.
+            fields: A tuple containing the fields that will be used for data
+                in each language.
+            root: Root dataset storage directory. Default is '.data'.
+            train: The prefix of the train data. 
+            validation: The prefix of the validation data. 
+            test: The prefix of the test data. 
+            Remaining keyword arguments: Passed to the splits method of
+                Dataset.
+        """
+        if 'path' not in kwargs:
+            expected_folder = Path(root).joinpath(cls.name)
+            path = str(expected_folder) if expected_folder.exists() else None
+        else:
+            path = kwargs['path']
+            del kwargs['path']
+
+        return super(KoEn, cls).splits(
+            exts, fields, path, root, train, validation, test, **kwargs)
+
+
 
 class SplitReversibleField(Field):
     """ref: http://anie.me/On-Torchtext/"""
@@ -56,21 +96,35 @@ def get_data(args):
         
     spacy_de = spacy.load('de')
     spacy_en = spacy.load('en')
-
+    
+    # set up tokenizer
     def tokenize_de(text):
         return [tok.text for tok in spacy_de.tokenizer(text)]
 
     def tokenize_en(text):
         return [tok.text for tok in spacy_en.tokenizer(text)]
-
+    
+    tokenize_ko = Mecab().morphs
+    
+    tokenizer_dict = {"en-de": {"src": tokenize_en, "trg": tokenize_de},
+                      "ko-en": {"src": tokenize_ko, "trg": tokenize_en}}
+    if args.data_type in ["multi30k", "wmt14", "iswlt"]:
+        tokenize_src = tokenizer_dict["en-de"]["src"]
+        tokenize_trg = tokenizer_dict["en-de"]["trg"]
+    elif args.data_type in ["koen"]:
+        tokenize_src = tokenizer_dict["ko-en"]["src"]
+        tokenize_trg = tokenizer_dict["ko-en"]["trg"]
+    else:
+        assert False, "error"
+        
     # set up fields
-    src = SplitReversibleField(tokenize=tokenize_en, 
+    src = SplitReversibleField(tokenize=tokenize_src, 
                 use_vocab=True, 
                 lower=True, 
                 include_lengths=False, 
                 fix_length=args.max_length, # fix max length
                 batch_first=True)
-    trg = SplitReversibleField(tokenize=tokenize_de, 
+    trg = SplitReversibleField(tokenize=tokenize_trg, 
                 use_vocab=True,
                 init_token='<s>',
                 eos_token='</s>', 
@@ -87,8 +141,6 @@ def get_data(args):
         src.build_vocab(train.src, min_freq=args.min_freq)
         trg.build_vocab(train.trg, min_freq=args.min_freq)
         
-        
-        
     elif args.data_type == "wmt14":
         # make splits for data
         train, valid, test = datasets.WMT14.splits(('.en', '.de'), 
@@ -103,6 +155,15 @@ def get_data(args):
         train, valid, test = datasets.IWSLT.splits(('.en', '.de'), 
                                                    (src, trg), 
                                                    root=args.root_dir)
+        # build the vocabulary
+        src.build_vocab(train.src, min_freq=args.min_freq)
+        trg.build_vocab(train.trg, min_freq=args.min_freq)
+        
+    elif args.data_type == "koen":     
+        # make splits for data
+        train, valid, test = KoEn.splits(('.ko', '.en'), 
+                                         (src, trg), 
+                                         root=args.root_dir)
         # build the vocabulary
         src.build_vocab(train.src, min_freq=args.min_freq)
         trg.build_vocab(train.trg, min_freq=args.min_freq)

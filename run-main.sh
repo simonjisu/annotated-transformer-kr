@@ -1,6 +1,6 @@
 nohup python3 -u main.py \
     -rt "./data" \
-    -dt "multi30k" \
+    -dt "wmt14" \
     -maxlen 50 \
     -minfreq 5 \
     -nl 6 \
@@ -17,10 +17,10 @@ nohup python3 -u main.py \
     -warm 4000 \
     -b1 0.9 \
     -b2 0.98 \
-    -bt 128 \
+    -bt 64 \
     -step 30 \
     -cuda \
     -vb 1 \
     -met "acc" \
-    -svp "./saved_model/model-multi30k.pt" \
-    > trainlog/train-multi30k.log &
+    -svp "./saved_model/model-wmt14.pt" \
+    > trainlog/train-wmt14.log &
